@@ -3679,14 +3679,21 @@ export class DrawingEntitiesManager {
               return;
             }
 
-            const isModifiedPhosphate =
-              monomer instanceof Phosphate && monomer.isModification;
-            const antisenseMonomerItem = isModifiedPhosphate
-              ? getRnaPartLibraryItem(
-                  editor,
-                  RNA_DNA_NON_MODIFIED_PART.PHOSPHATE,
-                ) ?? monomer.monomerItem
-              : monomer.monomerItem;
+            let antisenseMonomerItem: MonomerItemType;
+            if (monomer instanceof AmbiguousMonomer) {
+              antisenseMonomerItem =
+                monomer.variantMonomerItem as MonomerItemType;
+            } else {
+              const isModifiedPhosphate =
+                monomer instanceof Phosphate && monomer.isModification;
+              antisenseMonomerItem = isModifiedPhosphate
+                ? getRnaPartLibraryItem(
+                    editor,
+                    RNA_DNA_NON_MODIFIED_PART.PHOSPHATE,
+                  ) ?? monomer.monomerItem
+                : monomer.monomerItem;
+            }
+
             const monomerAddCommand = this.addMonomer(
               antisenseMonomerItem,
               monomer.position.add(new Vec2(0, 4.25)),
