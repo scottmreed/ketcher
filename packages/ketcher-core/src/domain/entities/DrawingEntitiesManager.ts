@@ -74,6 +74,7 @@ import { RecalculateCanvasMatrixOperation } from 'application/editor/operations/
 import { Matrix } from 'domain/entities/canvas-matrix/Matrix';
 import { Cell } from 'domain/entities/canvas-matrix/Cell';
 import { AmbiguousMonomer } from 'domain/entities/AmbiguousMonomer';
+import { Peptide } from 'domain/entities/Peptide';
 import {
   IKetTemplateConnection,
   KetMonomerClass,
@@ -3654,6 +3655,18 @@ export class DrawingEntitiesManager {
 
           [...senseNode.monomers].reverse().forEach((monomer) => {
             if (!monomer.selected) {
+              lastAddedMonomer = undefined;
+              lastAddedNode = undefined;
+
+              return;
+            }
+
+            const isPeptideMonomer =
+              monomer instanceof Peptide ||
+              (monomer instanceof AmbiguousMonomer &&
+                monomer.monomerClass === KetMonomerClass.AminoAcid);
+
+            if (isPeptideMonomer) {
               lastAddedMonomer = undefined;
               lastAddedNode = undefined;
 
