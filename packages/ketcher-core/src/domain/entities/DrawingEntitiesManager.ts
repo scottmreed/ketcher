@@ -74,7 +74,6 @@ import { RecalculateCanvasMatrixOperation } from 'application/editor/operations/
 import { Matrix } from 'domain/entities/canvas-matrix/Matrix';
 import { Cell } from 'domain/entities/canvas-matrix/Cell';
 import { AmbiguousMonomer } from 'domain/entities/AmbiguousMonomer';
-import { Peptide } from 'domain/entities/Peptide';
 import {
   IKetTemplateConnection,
   KetMonomerClass,
@@ -3661,15 +3660,12 @@ export class DrawingEntitiesManager {
               return;
             }
 
-            const isPeptideMonomer =
-              monomer instanceof Peptide ||
-              (monomer instanceof AmbiguousMonomer &&
-                monomer.monomerClass === KetMonomerClass.AminoAcid);
-
-            if (isPeptideMonomer) {
-              lastAddedMonomer = undefined;
-              lastAddedNode = undefined;
-
+            if (
+              monomer instanceof AmbiguousMonomer &&
+              monomer.monomerClass !== KetMonomerClass.Phosphate &&
+              monomer.monomerClass !== KetMonomerClass.Sugar &&
+              monomer.monomerClass !== KetMonomerClass.Base
+            ) {
               return;
             }
 
@@ -3692,20 +3688,14 @@ export class DrawingEntitiesManager {
               return;
             }
 
-            let antisenseMonomerItem: MonomerItemType;
-            if (monomer instanceof AmbiguousMonomer) {
-              antisenseMonomerItem =
-                monomer.variantMonomerItem as MonomerItemType;
-            } else {
-              const isModifiedPhosphate =
-                monomer instanceof Phosphate && monomer.isModification;
-              antisenseMonomerItem = isModifiedPhosphate
-                ? getRnaPartLibraryItem(
-                    editor,
-                    RNA_DNA_NON_MODIFIED_PART.PHOSPHATE,
-                  ) ?? monomer.monomerItem
-                : monomer.monomerItem;
-            }
+            const isModifiedPhosphate =
+              monomer instanceof Phosphate && monomer.isModification;
+            const antisenseMonomerItem = isModifiedPhosphate
+              ? getRnaPartLibraryItem(
+                  editor,
+                  RNA_DNA_NON_MODIFIED_PART.PHOSPHATE,
+                ) ?? monomer.monomerItem
+              : monomer.monomerItem;
 
             const monomerAddCommand = this.addMonomer(
               antisenseMonomerItem,
