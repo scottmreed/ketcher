@@ -22,7 +22,7 @@ import { SnakeLayoutCellWidth } from 'domain/constants';
 export class Nucleotide {
   private readonly monomersCache: BaseMonomer[] = [];
   constructor(
-    public readonly sugar: Sugar,
+    public readonly sugar: Sugar | AmbiguousMonomer,
     public readonly rnaBase: RNABase | AmbiguousMonomer,
     public readonly phosphate: Phosphate,
   ) {
@@ -37,7 +37,7 @@ export class Nucleotide {
     );
   }
 
-  static fromSugar(sugar: Sugar, needValidation = true) {
+  static fromSugar(sugar: Sugar | AmbiguousMonomer, needValidation = true) {
     if (needValidation) {
       assert(
         isValidNucleotide(sugar),

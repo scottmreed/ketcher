@@ -22,6 +22,7 @@ import {
 } from 'domain/helpers/monomers';
 import { EmptySubChain } from 'domain/entities/monomer-chains/EmptySubChain';
 import { AmbiguousMonomerSequenceNode } from 'domain/entities/AmbiguousMonomerSequenceNode';
+import { KetMonomerClass } from 'application/formatters';
 
 let id = 0;
 export class Chain {
@@ -92,6 +93,16 @@ export class Chain {
     }
 
     if (monomer instanceof AmbiguousMonomer) {
+      if (monomer.monomerClass === KetMonomerClass.Sugar) {
+        if (isValidNucleoside(monomer, this.firstMonomer)) {
+          this.lastSubChain.add(Nucleoside.fromSugar(monomer, false));
+          return;
+        }
+        if (isValidNucleotide(monomer, this.firstMonomer)) {
+          this.lastSubChain.add(Nucleotide.fromSugar(monomer, false));
+          return;
+        }
+      }
       // If this ambiguous monomer can be part of a linker group (CHEM, Sugar, Phosphate, or Base class
       // connected to other linker-valid monomers), add it as a LinkerSequenceNode
       if (LinkerSequenceNode.isPartOfLinker(monomer)) {
