@@ -3,6 +3,7 @@ import { D3SvgElementSelection } from 'application/render/types';
 import {
   Coordinates,
   CoreEditor,
+  getRnaPresetPhosphatePosition,
   IRnaPreset,
   monomerFactory,
 } from 'application/editor';
@@ -106,6 +107,12 @@ export class AutochainPreviewView extends TransientView {
           scaledPosition,
         );
 
+      const phosphateOnLeft =
+        (monomerOrRnaItem.phosphatePosition ??
+          getRnaPresetPhosphatePosition(monomerOrRnaItem)) === 'left';
+      let leftConnectionPointX =
+        scaledPosition.x - sizeOfAutochainPreviewToConnect.width / 2;
+
       if (monomerOrRnaItem.base) {
         const basePosition = position.add(new Vec2(0, 1.5));
         const scaledBasePosition = Coordinates.modelToCanvas(basePosition);
@@ -127,7 +134,9 @@ export class AutochainPreviewView extends TransientView {
       }
 
       if (monomerOrRnaItem.phosphate) {
-        const phosphatePosition = position.add(new Vec2(1.5, 0));
+        const phosphatePosition = position.add(
+          new Vec2(phosphateOnLeft ? -1.5 : 1.5, 0),
+        );
         const scaledPhosphatePosition =
           Coordinates.modelToCanvas(phosphatePosition);
 
@@ -140,9 +149,31 @@ export class AutochainPreviewView extends TransientView {
 
         AutochainPreviewView.showBondPreview(
           transientLayer,
-          scaledPosition.x + sizeOfAutochainPreviewToConnect.width / 2,
+          phosphateOnLeft
+            ? scaledPhosphatePosition.x +
+                sizeOfPhosphateAutochainPreview.width / 2
+            : scaledPosition.x + sizeOfAutochainPreviewToConnect.width / 2,
           scaledPosition.y,
-          scaledPhosphatePosition.x - sizeOfPhosphateAutochainPreview.width / 2,
+          phosphateOnLeft
+            ? scaledPosition.x - sizeOfAutochainPreviewToConnect.width / 2
+            : scaledPhosphatePosition.x -
+                sizeOfPhosphateAutochainPreview.width / 2,
+          scaledPosition.y,
+        );
+
+        if (phosphateOnLeft) {
+          leftConnectionPointX =
+            scaledPhosphatePosition.x -
+            sizeOfPhosphateAutochainPreview.width / 2;
+        }
+      }
+
+      if (selectedMonomerToConnect) {
+        AutochainPreviewView.showBondPreview(
+          transientLayer,
+          scaledPosition.x - SnakeLayoutCellWidth,
+          scaledPosition.y,
+          leftConnectionPointX,
           scaledPosition.y,
         );
       }
@@ -154,8 +185,9 @@ export class AutochainPreviewView extends TransientView {
           scaledPosition,
         );
     }
-
-    if (selectedMonomerToConnect) {
+    // Non-RNA items draw their incoming autochain bond here. RNA presets draw
+    // it in the branch above so 5' presets can connect to the left phosphate.
+    if (selectedMonomerToConnect && !isLibraryItemRnaPreset(monomerOrRnaItem)) {
       AutochainPreviewView.showBondPreview(
         transientLayer,
         scaledPosition.x - SnakeLayoutCellWidth,
