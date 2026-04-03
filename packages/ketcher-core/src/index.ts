@@ -32,4 +32,5 @@ export * from 'application/ketcherBuilder';
 export * from 'application/utils';
 export * from 'domain/helpers/monomers';
 
+export * from 'types';
 export * from 'utilities';
