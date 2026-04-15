@@ -17,6 +17,7 @@
 import {
   RxnArrowMode,
   SimpleObjectMode,
+  Struct,
   findStereoAtoms,
   IMAGE_KEY,
   MULTITAIL_ARROW_TOOL_NAME,
@@ -28,7 +29,19 @@ import isHidden from './isHidden';
 import { toBondType } from '../data/convert/structconv';
 import { isFlipDisabled } from './flips';
 
-const toolActions = {
+export interface ToolAction {
+  title?: string;
+  shortcut?: string | string[];
+  enabledInViewOnly?: boolean;
+  action?: {
+    tool: string;
+    opts?: string | number | Record<string, unknown>;
+  };
+  disabled?: (editor: Record<string, unknown>) => unknown;
+  hidden?: (options: Record<string, unknown>) => boolean;
+}
+
+const toolActions: Record<string, ToolAction> = {
   hand: {
     title: 'Hand tool',
     enabledInViewOnly: true,
@@ -76,12 +89,16 @@ const toolActions = {
     shortcut: 'Alt+e',
     title: 'Stereochemistry',
     action: { tool: 'enhancedStereo' },
-    disabled: (editor) =>
-      editor.isMonomerCreationWizardActive ||
-      findStereoAtoms(
-        editor?.struct(),
-        Array.from(editor?.struct().atoms.keys()),
-      ).length === 0,
+    disabled: (editor) => {
+      const editorStruct = (editor.struct as () => Struct)?.();
+      return (
+        editor.isMonomerCreationWizardActive ||
+        findStereoAtoms(
+          editorStruct,
+          Array.from(editorStruct?.atoms.keys() ?? []),
+        ).length === 0
+      );
+    },
     hidden: (options) => isHidden(options, 'enhanced-stereo'),
   },
   'charge-plus': {
@@ -398,7 +415,7 @@ const toolActions = {
   },
 };
 
-const bondCuts = {
+const bondCuts: Record<string, string> = {
   single: '1',
   double: '2',
   triple: '3',
@@ -412,15 +429,19 @@ const bondCuts = {
 
 const typeSchema = bondSchema.properties.type;
 
-export default typeSchema.enum.reduce((res, type, i) => {
-  res[`bond-${type}`] = {
-    title: `${typeSchema.enumNames[i]} Bond`,
-    shortcut: bondCuts[type],
-    action: {
-      tool: 'bond',
-      opts: toBondType(type),
-    },
-    hidden: (options) => isHidden(options, `bond-${type}`),
-  };
-  return res;
-}, toolActions);
+export default typeSchema.enum.reduce(
+  (res: Record<string, ToolAction>, type: string, i: number) => {
+    res[`bond-${type}`] = {
+      title: `${typeSchema.enumNames[i]} Bond`,
+      shortcut: bondCuts[type],
+      action: {
+        tool: 'bond',
+        opts: toBondType(type),
+      },
+      hidden: (options: Record<string, unknown>) =>
+        isHidden(options, `bond-${type}`),
+    };
+    return res;
+  },
+  toolActions,
+);
